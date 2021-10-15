@@ -1,0 +1,15 @@
+.catImg{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 150px;
+    /* visibility: hidden; */
+}
+.text{
+    font-size: 30px;
+    font-weight: bold;
+    margin-top: 20px;
+    text-align: center;
+    color: red;
+    /* visibility: hidden; */
+}
