@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Container from '../Container';
@@ -11,90 +11,74 @@ import NoFound from '../NoFound';
 import ImageGallery from '../ImageGallery';
 import Modal from '../Modal';
 
-class App extends Component {
-  state = {
-    page: 1,
-    searchQuery: '',
-    images: [],
-    loading: false,
-    showModal: false,
-    largeImage: {},
+function App() {
+  const [page, setPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [largeImage, setLargeImage] = useState({});
+
+  useEffect(() => {
+    if (!searchQuery) return;
+    const fetchImages = async () => {
+      try {
+        const hits = await fetchPictures(searchQuery, page);
+        setImages(prevImages => [...prevImages, ...hits]);
+        if (page !== 1) {
+          scrollPageDown();
+        }
+      } catch (error) {
+        console.log(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchImages();
+  }, [page, searchQuery]);
+
+  const handleOnLoadClick = () => {
+    setLoading(true);
+    setPage(prevPage => prevPage + 1);
+    setLoading(false);
   };
 
-  componentDidUpdate(prevProps, prevState) {
-    const { searchQuery } = this.state;
-    if (searchQuery !== prevState.searchQuery) {
-      // this.setState({ loading: true, page: 1 });
-      this.fetchImages()
-        .catch(error => console.log(error))
-        .finally(() => this.setState({ loading: false }));
-    }
-  }
+  const handleClickImages = largeImage => {
+    setLargeImage(largeImage);
+    toggleModal();
+  };
+  const toggleModal = () => {
+    setShowModal(!showModal);
+  };
 
-  fetchImages = () => {
-    const { searchQuery, page } = this.state;
-    this.setState({ loading: true });
-    return fetchPictures(searchQuery, page).then(images => {
-      this.setState(prevState => ({
-        images: [...prevState.images, ...images],
-        page: prevState.page + 1,
-      }));
-    });
+  const fetchImagesBySubmit = searchQuery => {
+    setSearchQuery(searchQuery);
+    setImages([]);
+    setPage(1);
+    setLoading(true);
   };
-  handleOnLoadClick = () => {
-    this.setState({ loading: true });
-    this.fetchImages()
-      .then(() => {
-        scrollPageDown();
-      })
-      .catch(error => console.log(error))
-      .finally(() => this.setState({ loading: false }));
-  };
-  handleClickImages = largeImage => {
-    this.setState({ largeImage });
-    this.toggleModal();
-  };
-  toggleModal = () => {
-    this.setState(({ showModal }) => ({
-      showModal: !showModal,
-    }));
-  };
-  handleFormSubmit = searchQuery => {
-    this.setState({
-      page: 1,
-      searchQuery,
-      images: [],
-    });
-  };
-  hideLoaderInModal = () => this.setState({ loading: false });
 
-  render() {
-    const { images, loading, showModal, largeImage, searchQuery } = this.state;
-    return (
-      <Container>
-        <ToastContainer autoClose={4000} />
-        <Searchbar onSubmit={this.handleFormSubmit} />
-        {loading && <MyLoader />}
-        {images.length !== 0 ? (
-          <ImageGallery images={images} onOpenModal={this.handleClickImages} />
-        ) : (
-          searchQuery !== '' && <NoFound />
-        )}
-        {loading && !showModal && <MyLoader />}
-        {!loading && images[0] && <Button onClick={this.handleOnLoadClick} />}
-        {showModal && (
-          <Modal onClose={this.toggleModal}>
-            {loading && <MyLoader />}
-            <img
-              src={largeImage.largeImageURL}
-              alt={largeImage.tags}
-              onLoad={this.hideLoaderInModal}
-            />
-          </Modal>
-        )}
-      </Container>
-    );
-  }
+  return (
+    <Container>
+      <ToastContainer autoClose={4000} />
+      <Searchbar onSubmit={fetchImagesBySubmit} />
+      {loading && <MyLoader />}
+      {images.length !== 0 ? (
+        <ImageGallery images={images} onOpenModal={handleClickImages} />
+      ) : (
+        searchQuery !== '' && <NoFound />
+      )}
+      {loading && !showModal && <MyLoader />}
+      {!loading && images[0] && <Button onClick={handleOnLoadClick} />}
+      {showModal && (
+        <Modal onClose={toggleModal}>
+          {loading && <MyLoader />}
+          <img src={largeImage.largeImageURL} alt={largeImage.tags} />
+        </Modal>
+      )}
+    </Container>
+  );
 }
 
 export default App;

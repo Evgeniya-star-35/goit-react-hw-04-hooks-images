@@ -3,7 +3,6 @@ import ImageGalleryItem from '../ImageGalleryItem';
 import s from './ImageGallery.module.css';
 
 export default function ImageGallery({ images, onOpenModal }) {
-  // console.log(images);
   return (
     <ul className={s.imageGallery}>
       {images.map(image => (
