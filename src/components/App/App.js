@@ -21,6 +21,7 @@ function App() {
 
   useEffect(() => {
     if (!searchQuery) return;
+    setLoading(true);
     const fetchImages = async () => {
       try {
         const hits = await fetchPictures(searchQuery, page);
